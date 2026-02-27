@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Max.Space</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1049,30 +1049,20 @@
   }
   .auth-link:hover { color: var(--text); }
 
-  /* ── Top Bar ── */
-  .projects-top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    margin-bottom: 20px;
-  }
-  .projects-top-bar .current-date {
-    margin-bottom: 0;
-  }
-
   .logout-btn {
-    position: absolute;
-    right: 0;
-    background: none;
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--text-dim);
     font-family: 'DM Sans', sans-serif;
     font-size: 0.72rem;
-    padding: 5px 10px;
+    padding: 6px 12px;
     cursor: pointer;
     transition: border-color 0.2s, color 0.2s;
+    z-index: 50;
   }
   .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
 
@@ -1128,14 +1118,20 @@
     .auth-card { padding: 32px 22px 28px; }
     .auth-title { font-size: 1.8rem; }
     .auth-input { padding: 12px 14px; }
+    .auth-btn { padding: 16px; font-size: 1rem; min-height: 52px; }
 
     .projects-header { padding-top: 16px; margin-bottom: 28px; }
     .projects-header h1 { font-size: 2.2rem; }
     .current-date { font-size: 0.78rem; margin-bottom: 10px; }
 
     .projects-header { padding-top: 8px; margin-bottom: 24px; }
-    .text-input { padding: 12px 14px; font-size: 0.9rem; }
+    .text-input { padding: 12px 14px; font-size: 16px; }
     .btn { padding: 0 16px; font-size: 0.88rem; }
+
+    /* Prevent iOS zoom on input focus */
+    .modal-input, .modal-textarea, .modal-date, .auth-input, select, textarea, input[type="text"], input[type="email"], input[type="password"], input[type="date"] {
+      font-size: 16px !important;
+    }
 
     .project-card { padding: 14px 14px; gap: 12px; }
     .project-name { font-size: 0.95rem; }
@@ -1238,6 +1234,7 @@
 </div>
 
 <div class="save-indicator" id="saveIndicator">Saving...</div>
+<button class="logout-btn" id="logoutBtn" onclick="handleLogout()" title="Sign out" style="display:none;">Sign Out</button>
 
 <div class="app" id="appContainer" style="display:none;">
   <div class="deco-top">
@@ -1250,10 +1247,7 @@
 
   <!-- ═══ PROJECTS ═══ -->
   <div class="screen active" id="projectsScreen">
-    <div class="projects-top-bar">
-      <div class="current-date" id="currentDate"></div>
-      <button class="logout-btn" onclick="handleLogout()" title="Sign out">Sign Out</button>
-    </div>
+    <div class="current-date" id="currentDate"></div>
     <div class="projects-list" id="projectsList"></div>
     <button class="add-project-btn" onclick="openProjectModal()">
       <span class="add-project-plus">+</span>
@@ -1516,6 +1510,7 @@
       currentUid = user.uid;
       authScreen.style.display = 'none';
       document.getElementById('appContainer').style.display = '';
+      document.getElementById('logoutBtn').style.display = '';
 
       // Load saved data (importState calls goTo('projects') which renders everything)
       const loaded = await loadFromFirestore(user.uid);
@@ -1529,6 +1524,7 @@
       currentUid = null;
       authScreen.style.display = '';
       document.getElementById('appContainer').style.display = 'none';
+      document.getElementById('logoutBtn').style.display = 'none';
       authSubmit.disabled = false;
       authSubmit.textContent = isSignUp ? 'Create Account' : 'Sign In';
       authPassword.value = '';
@@ -1993,12 +1989,10 @@
     const due = todoDue.value || null;
 
     if (editingTodoId !== null) {
-      // Edit existing
       const t = currentProject.todos.find(t => t.id === editingTodoId);
       if (t) { t.text = text; t.details = details; t.due = due; }
       editingTodoId = null;
     } else {
-      // Create new
       const id = currentProject.nextTodoId++;
       currentProject.todos.unshift({ id, text, done: false, details, due });
       newTodoId = id;
@@ -2066,12 +2060,10 @@
     if (!title && !body) return;
 
     if (editingNoteId !== null) {
-      // Edit existing
       const n = currentProject.notes.find(n => n.id === editingNoteId);
       if (n) { n.title = title || 'Untitled'; n.body = body || ''; n.time = Date.now(); }
       editingNoteId = null;
     } else {
-      // Create new
       const id = currentProject.nextNoteId++;
       currentProject.notes.unshift({ id, title: title || 'Untitled', body: body || '', time: Date.now() });
       newNoteId = id;
