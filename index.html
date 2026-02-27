@@ -137,6 +137,34 @@
   .back-arrow { display: inline-block; transition: transform 0.2s; }
   .back-btn:hover .back-arrow { transform: translateX(-3px); }
 
+  /* ── Screen Back Title (project name as nav) ── */
+  .screen-back-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-bottom: 20px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
+    line-height: 1;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+  .screen-back-title::before {
+    content: '←';
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    transition: transform 0.2s, color 0.2s;
+  }
+  .screen-back-title:hover { color: var(--accent); }
+  .screen-back-title:hover::before { transform: translateX(-3px); color: var(--accent); }
+
   .sub-header { margin-bottom: 28px; }
   .sub-header h1 {
     font-family: 'Syne', sans-serif;
@@ -182,8 +210,9 @@
     font-size: 0.88rem;
     color: var(--text-dim);
     letter-spacing: 0.5px;
-    margin-top: 8px;
+    margin-bottom: 20px;
     text-transform: uppercase;
+    text-align: center;
   }
 
   .date-input {
@@ -503,6 +532,23 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .add-task-inline {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .add-task-inline:hover { transform: scale(1.04); }
+  .add-task-inline:active { transform: scale(0.97); opacity: 0.85; }
+
   .todo-list { display: flex; flex-direction: column; gap: 8px; }
 
   .todo-item {
@@ -607,28 +653,6 @@
   }
   .note-card .note-time { font-size: 0.72rem; color: #4a4860; margin-top: 8px; }
   .note-card .del-btn { position: absolute; top: 12px; right: 12px; }
-
-  /* ── Add Task Button ── */
-  .add-task-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: var(--surface);
-    border: 1.5px dashed var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    color: var(--text-dim);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.93rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    margin-bottom: 24px;
-  }
-  .add-task-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-  .add-task-plus { font-size: 1.2rem; font-weight: 700; line-height: 1; }
 
   /* ── Add Note Button ── */
   .add-note-btn {
@@ -957,7 +981,7 @@
     .todo-due-badge { font-size: 0.68rem; padding: 2px 7px; }
     .check { width: 20px; height: 20px; }
 
-    .add-task-btn { padding: 12px; font-size: 0.88rem; }
+    .add-task-inline { padding: 6px 10px; font-size: 0.75rem; }
     .add-note-btn { padding: 12px; font-size: 0.88rem; }
 
     .cal-modal { max-width: 100%; }
@@ -983,6 +1007,8 @@
     .upcoming-title { font-size: 0.88rem; }
 
     .back-btn { padding: 7px 12px; font-size: 0.8rem; margin-bottom: 18px; }
+    .screen-back-title { font-size: 1.3rem; margin-bottom: 16px; }
+    .screen-back-title::before { font-size: 0.8rem; }
 
     /* Modal */
     .modal { border-radius: 14px; margin: 10px; }
@@ -1019,10 +1045,7 @@
 
   <!-- ═══ PROJECTS ═══ -->
   <div class="screen active" id="projectsScreen">
-    <div class="projects-header">
-      <h1>Max<span class="dot1">.</span>Space</h1>
-      <div class="current-date" id="currentDate"></div>
-    </div>
+    <div class="current-date" id="currentDate"></div>
     <div class="projects-list" id="projectsList"></div>
     <button class="add-project-btn" onclick="openProjectModal()">
       <span class="add-project-plus">+</span>
@@ -1055,19 +1078,13 @@
 
   <!-- ═══ TODOS ═══ -->
   <div class="screen" id="todosScreen">
-    <button class="back-btn" onclick="goTo('workspace')"><span class="back-arrow">←</span> <span id="todoBackLabel">Back</span></button>
-    <div class="sub-header">
-      <div class="breadcrumb" id="todoBreadcrumb"></div>
-      <h1 style="color:var(--accent)">todos.</h1>
-    </div>
-    <button class="add-task-btn" onclick="openTaskModal()">
-      <span class="add-task-plus">+</span> Add Task
-    </button>
+    <button class="screen-back-title" id="todoScreenTitle" onclick="goTo('workspace')"></button>
     <div class="filters" id="todoFilters">
+      <button class="add-task-inline" onclick="openTaskModal()">+ Add</button>
+      <div class="count" id="todoCount"></div>
       <button class="active" data-filter="all">All</button>
       <button data-filter="active">Active</button>
       <button data-filter="done">Done</button>
-      <div class="count" id="todoCount"></div>
     </div>
     <div class="todo-list" id="todoList"></div>
   </div>
@@ -1114,11 +1131,7 @@
 
   <!-- ═══ NOTES ═══ -->
   <div class="screen" id="notesScreen">
-    <button class="back-btn" onclick="goTo('workspace')"><span class="back-arrow">←</span> <span id="noteBackLabel">Back</span></button>
-    <div class="sub-header">
-      <div class="breadcrumb" id="noteBreadcrumb"></div>
-      <h1 style="color:var(--accent2)">notes.</h1>
-    </div>
+    <button class="screen-back-title" id="noteScreenTitle" onclick="goTo('workspace')"></button>
     <button class="add-note-btn" onclick="openNoteModal()">
       <span class="add-note-plus">+</span> Add Note
     </button>
@@ -1607,8 +1620,7 @@
   // ── Todos ──
   function renderTodoMeta() {
     if (!currentProject) return;
-    document.getElementById('todoBackLabel').textContent = currentProject.name;
-    document.getElementById('todoBreadcrumb').innerHTML = `Projects <span>›</span> ${escHtml(currentProject.name)}`;
+    document.getElementById('todoScreenTitle').textContent = currentProject.name;
   }
 
   function saveTodo() {
@@ -1682,8 +1694,7 @@
   // ── Notes ──
   function renderNoteMeta() {
     if (!currentProject) return;
-    document.getElementById('noteBackLabel').textContent = currentProject.name;
-    document.getElementById('noteBreadcrumb').innerHTML = `Projects <span>›</span> ${escHtml(currentProject.name)}`;
+    document.getElementById('noteScreenTitle').textContent = currentProject.name;
   }
 
   function saveNote() {
