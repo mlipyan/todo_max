@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Max.Space</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -944,10 +947,187 @@
   .empty { text-align: center; padding: 50px 20px; color: var(--text-dim); }
   .empty-icon { font-size: 2.2rem; margin-bottom: 10px; opacity: 0.4; }
   .empty p { font-size: 0.88rem; }
+  /* ── Auth Screen ── */
+  .auth-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--bg);
+    border: 1.5px solid rgba(196, 240, 77, 0.15);
+    border-radius: 4px;
+    padding: 40px 32px 36px;
+    position: relative;
+  }
+
+  .auth-card::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(196, 240, 77, 0.08);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .auth-header {
+    text-align: center;
+    margin: 20px 0 28px;
+  }
+
+  .auth-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 2.2rem;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+  .auth-title .dot1 { color: var(--accent); }
+
+  .auth-subtitle {
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    margin-top: 8px;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .auth-input {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 0.93rem;
+  }
+
+  .auth-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 10px;
+    margin-top: 4px;
+  }
+
+  .auth-error {
+    background: rgba(255, 80, 80, 0.08);
+    border: 1px solid rgba(255, 80, 80, 0.2);
+    color: #ff6b6b;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+    display: none;
+    text-align: center;
+  }
+  .auth-error.show { display: block; }
+
+  .auth-toggle {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  .auth-link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-left: 4px;
+    transition: color 0.15s;
+  }
+  .auth-link:hover { color: var(--text); }
+
+  /* ── Top Bar ── */
+  .projects-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .projects-top-bar .current-date {
+    margin-bottom: 0;
+  }
+
+  .logout-btn {
+    position: absolute;
+    right: 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Loading Spinner ── */
+  .auth-loading {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-dim);
+    font-size: 0.88rem;
+  }
+  .auth-loading.show { display: block; }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Saving Indicator ── */
+  .save-indicator {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .save-indicator.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .save-indicator.saved { color: var(--accent); border-color: rgba(196,240,77,0.2); }
+  .save-indicator.error { color: var(--danger); border-color: rgba(255,80,80,0.2); }
+
   /* ── Mobile / iPhone Responsive ── */
   @media (max-width: 480px) {
     body { padding: 16px 10px; }
     .app { padding: 24px 18px; }
+
+    .auth-card { padding: 32px 22px 28px; }
+    .auth-title { font-size: 1.8rem; }
+    .auth-input { padding: 12px 14px; }
 
     .projects-header { padding-top: 16px; margin-bottom: 28px; }
     .projects-header h1 { font-size: 2.2rem; }
@@ -1034,7 +1214,32 @@
 </head>
 <body>
 
-<div class="app">
+<!-- ═══ AUTH SCREEN ═══ -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="deco-top">
+      <div class="diamond"></div><div class="diamond"></div><div class="diamond"></div><div class="diamond"></div><div class="diamond"></div>
+    </div>
+    <div class="auth-header">
+      <div class="auth-title">Max<span class="dot1">.</span>Space</div>
+      <div class="auth-subtitle" id="authSubtitle">Sign in to your workspace</div>
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-form">
+      <input class="text-input auth-input" type="email" id="authEmail" placeholder="Email">
+      <input class="text-input auth-input" type="password" id="authPassword" placeholder="Password">
+      <button class="btn green auth-btn" id="authSubmit" onclick="handleAuth()">Sign In</button>
+    </div>
+    <div class="auth-toggle">
+      <span id="authToggleText">Don't have an account?</span>
+      <button class="auth-link" id="authToggleBtn" onclick="toggleAuthMode()">Sign Up</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-indicator" id="saveIndicator">Saving...</div>
+
+<div class="app" id="appContainer" style="display:none;">
   <div class="deco-top">
     <div class="diamond"></div>
     <div class="diamond"></div>
@@ -1045,7 +1250,10 @@
 
   <!-- ═══ PROJECTS ═══ -->
   <div class="screen active" id="projectsScreen">
-    <div class="current-date" id="currentDate"></div>
+    <div class="projects-top-bar">
+      <div class="current-date" id="currentDate"></div>
+      <button class="logout-btn" onclick="handleLogout()" title="Sign out">Sign Out</button>
+    </div>
     <div class="projects-list" id="projectsList"></div>
     <button class="add-project-btn" onclick="openProjectModal()">
       <span class="add-project-plus">+</span>
@@ -1178,6 +1386,162 @@
 </div>
 
 <script>
+  // ══════════════════════════════
+  // FIREBASE INIT
+  // ══════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyBEtXHPJsxTMLARZ4HgdAO9ErnEagI31MA",
+    authDomain: "genericdata-78230.firebaseapp.com",
+    projectId: "genericdata-78230",
+    storageBucket: "genericdata-78230.firebasestorage.app",
+    messagingSenderId: "16066418339",
+    appId: "1:16066418339:web:32c96fc7818a8dff941116"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ── Auth UI ──
+  let isSignUp = false;
+  const authScreen = document.getElementById('authScreen');
+  const authError = document.getElementById('authError');
+  const authEmail = document.getElementById('authEmail');
+  const authPassword = document.getElementById('authPassword');
+  const authSubmit = document.getElementById('authSubmit');
+
+  function showAuthError(msg) {
+    authError.textContent = msg;
+    authError.classList.add('show');
+  }
+  function hideAuthError() {
+    authError.classList.remove('show');
+  }
+
+  function toggleAuthMode() {
+    isSignUp = !isSignUp;
+    hideAuthError();
+    authSubmit.textContent = isSignUp ? 'Create Account' : 'Sign In';
+    document.getElementById('authSubtitle').textContent = isSignUp
+      ? 'Create your workspace' : 'Sign in to your workspace';
+    document.getElementById('authToggleText').textContent = isSignUp
+      ? 'Already have an account?' : "Don't have an account?";
+    document.getElementById('authToggleBtn').textContent = isSignUp
+      ? 'Sign In' : 'Sign Up';
+  }
+
+  async function handleAuth() {
+    const email = authEmail.value.trim();
+    const pass = authPassword.value;
+    if (!email || !pass) { showAuthError('Please enter email and password'); return; }
+    if (pass.length < 6) { showAuthError('Password must be at least 6 characters'); return; }
+    hideAuthError();
+    authSubmit.disabled = true;
+    authSubmit.textContent = isSignUp ? 'Creating...' : 'Signing in...';
+    try {
+      if (isSignUp) {
+        await auth.createUserWithEmailAndPassword(email, pass);
+      } else {
+        await auth.signInWithEmailAndPassword(email, pass);
+      }
+    } catch (e) {
+      const msgs = {
+        'auth/user-not-found': 'No account found with this email',
+        'auth/wrong-password': 'Incorrect password',
+        'auth/invalid-credential': 'Invalid email or password',
+        'auth/email-already-in-use': 'An account with this email already exists',
+        'auth/invalid-email': 'Please enter a valid email',
+        'auth/weak-password': 'Password must be at least 6 characters',
+        'auth/too-many-requests': 'Too many attempts. Try again later',
+      };
+      showAuthError(msgs[e.code] || e.message);
+      authSubmit.disabled = false;
+      authSubmit.textContent = isSignUp ? 'Create Account' : 'Sign In';
+    }
+  }
+
+  function handleLogout() {
+    auth.signOut();
+  }
+
+  // ── Firestore Save/Load ──
+  let currentUid = null;
+  let saveTimeout = null;
+  const saveIndicator = document.getElementById('saveIndicator');
+
+  function showSaveStatus(text, cls) {
+    saveIndicator.textContent = text;
+    saveIndicator.className = 'save-indicator show ' + (cls || '');
+    clearTimeout(saveIndicator._hide);
+    saveIndicator._hide = setTimeout(() => {
+      saveIndicator.classList.remove('show');
+    }, 1500);
+  }
+
+  function saveToFirestore() {
+    if (!currentUid) return;
+    showSaveStatus('Saving...', '');
+    db.collection('users').doc(currentUid).set({
+      state: exportState(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      showSaveStatus('Saved', 'saved');
+    }).catch(err => {
+      console.error('Save failed:', err);
+      showSaveStatus('Save failed', 'error');
+    });
+  }
+
+  function debouncedSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveToFirestore, 800);
+  }
+
+  async function loadFromFirestore(uid) {
+    try {
+      const doc = await db.collection('users').doc(uid).get();
+      if (doc.exists && doc.data().state) {
+        const success = importState(doc.data().state);
+        if (success) return true;
+      }
+    } catch (e) {
+      console.error('Load failed:', e);
+    }
+    return false;
+  }
+
+  // ── Auth State Listener ──
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUid = user.uid;
+      authScreen.style.display = 'none';
+      document.getElementById('appContainer').style.display = '';
+
+      // Load saved data (importState calls goTo('projects') which renders everything)
+      const loaded = await loadFromFirestore(user.uid);
+
+      if (!loaded) {
+        // First time user or no saved data — render defaults and save them
+        goTo('projects');
+        saveToFirestore();
+      }
+    } else {
+      currentUid = null;
+      authScreen.style.display = '';
+      document.getElementById('appContainer').style.display = 'none';
+      authSubmit.disabled = false;
+      authSubmit.textContent = isSignUp ? 'Create Account' : 'Sign In';
+      authPassword.value = '';
+    }
+  });
+
+  // Enter key on auth inputs
+  document.getElementById('authPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleAuth();
+  });
+  document.getElementById('authEmail').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('authPassword').focus();
+  });
   // ── Palette for project dots ──
   const COLORS = ['#c4f04d','#6c8cff','#ff6b8a','#ffa64d','#8b5cf6','#2dd4bf','#f472b6','#facc15'];
 
@@ -1324,20 +1688,18 @@
     }
   })();
 
-  // Called after every state mutation — wire up persistence here later
+  // Called after every state mutation — saves to Firestore
   function stateChanged() {
-    // Verify state is serializable on every change
+    // Verify state is serializable
     try {
       const json = exportState();
-      const parsed = JSON.parse(json);
-      if (!parsed.projects || typeof parsed.nextProjectId !== 'number') {
-        console.error('State corruption detected!');
-      }
+      JSON.parse(json);
     } catch (e) {
       console.error('State not serializable:', e);
+      return;
     }
-    // Uncomment below for persistence:
-    // localStorage.setItem('maxspace', exportState());
+    // Debounced save to Firestore
+    debouncedSave();
   }
   let currentProject = null;
   let todoFilter = 'all';
@@ -2017,9 +2379,7 @@
       `).join('')}`;
   }
 
-  renderCurrentDate();
-  renderProjects();
-  renderUpcoming();
+  // Initial render is handled by auth.onAuthStateChanged
 </script>
 </body>
 </html>
